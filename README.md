@@ -1,6 +1,6 @@
 # 🍅 Tutomato
 
-**Lock in to ripen up: a Pomodoro study timer for students.**
+**Lock in to ripen up: A Pomodori study timer for students.**
 
 ## Problem Statement
 
