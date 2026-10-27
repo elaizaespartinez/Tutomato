@@ -35,3 +35,20 @@ Students, particularly those who struggle with procrastination, distractions, an
 - **No app or website blocking.** The app will not block other applications, due to operating system restrictions and limited development time.
 - **Single platform.** The app is developed and tested on Android only. There is no iOS or web version.
 
+## References
+
+<!-- TODO: add your references here (articles on the Pomodoro technique, UI inspirations, libraries used, etc.) -->
+
+---
+
+<div align="center">
+
+## 🍅 Thank You for Reading!
+
+Thank you for checking out **Tutomato: Lock in to Ripen Up**.
+
+<b>Lock in. Ripen up.</b> 🍅
+
+© 2026 **Tutomato**. All rights reserved.
+
+</div>
