@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// Paste into Firebase Console > Firestore Database > Rules, then Publish.
+// (Or save as firestore.rules and run `firebase deploy --only firestore:rules`.)
+//
+// Replaces the insecure "test mode" rules that expire after 30 days.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Private data: only the owner can read or write.
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /tasks/{taskId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Cheers: any signed-in user may send one to this user (as themselves);
+      // only the owner can read or delete them.
+      match /cheers/{cheerId} {
+        allow create, update: if signedIn()
+                              && request.resource.data.fromUid == request.auth.uid;
+        allow read, delete: if isOwner(uid);
+      }
+    }
+
+    // What friends can see: name, outfit, level, today's minutes, invite code.
+    // No email, points or tasks. Any signed-in user can read it (this is how
+    // "add a friend by invite code" finds someone); only the owner can write.
+    match /publicProfiles/{uid} {
+      allow read: if signedIn();
+      allow write: if isOwner(uid);
+    }
+
+    // Shared streaks, doc id = the two uids sorted and joined with "_".
+    match /friendships/{pairId} {
+      // `resource == null` lets the app check "does this friendship exist yet?"
+      allow read: if signedIn()
+                  && (resource == null || request.auth.uid in resource.data.members);
+      allow create: if signedIn()
+                    && request.auth.uid in request.resource.data.members
+                    && request.resource.data.members.size() == 2;
+      allow update, delete: if signedIn()
+                            && request.auth.uid in resource.data.members;
+    }
+  }
+}
