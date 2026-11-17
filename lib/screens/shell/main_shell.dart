@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/widgets/page_width.dart';
-import '../../core/widgets/placeholder_screen.dart';
+import '../friends/friends_screen.dart';
+import '../home/home_screen.dart';
+import '../pomodori/pomodori_screen.dart';
+import '../records/records_screen.dart';
 import 'create_sheet.dart';
+import 'desktop_sidebar.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,14 +20,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0; // 0 Home, 1 Pomodori, 2 Records, 3 Friends
 
-  // Swap each placeholder for the real screen as you build it.
-  static const _tabs = [
-    PlaceholderScreen('Home'),
-    PlaceholderScreen('Your Pomodori'),
-    PlaceholderScreen('Your records'),
-    PlaceholderScreen('Better together'),
-  ];
-
   Widget _item(int i, IconData icon, String label) => _NavItem(
     icon: icon,
     label: label,
@@ -29,37 +27,75 @@ class _MainShellState extends State<MainShell> {
     onTap: () => setState(() => _index = i),
   );
 
-  @override
-  Widget build(BuildContext context) {
-    return PageWidth(
-      child: Scaffold(
-        body: SafeArea(child: IndexedStack(index: _index, children: _tabs)),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _item(0, Icons.home_outlined, 'Home'),
-                _item(1, Icons.eco_outlined, 'Pomodori'),
-                GestureDetector(
-                  onTap: () => showCreateSheet(context),
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.tomato,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 32),
-                  ),
-                ),
-                _item(2, Icons.bar_chart, 'Records'),
-                _item(3, Icons.people_outline, 'Friends'),
-              ],
+  // Phone navigation
+  Widget _bottomBar(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _item(0, Icons.home_outlined, 'Home'),
+          _item(1, Icons.eco_outlined, 'Pomodori'),
+          GestureDetector(
+            onTap: () => showCreateSheet(context),
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.tomato,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
             ),
           ),
+          _item(2, Icons.bar_chart, 'Records'),
+          _item(3, Icons.people_outline, 'Friends'),
+        ],
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final tabs = [
+      HomeScreen(onOpenPomodori: () => setState(() => _index = 1)),
+      const PomodoriScreen(),
+      const RecordsScreen(),
+      const FriendsScreen(),
+    ];
+    final content = IndexedStack(index: _index, children: tabs);
+    final size = Responsive.of(context);
+
+    // Phone and tablet: same layout as the design
+    if (size != ScreenSize.desktop) {
+      return PageWidth(
+        child: Scaffold(
+          body: SafeArea(child: content),
+          bottomNavigationBar: _bottomBar(context),
         ),
+      );
+    }
+
+    // Laptop: full-height sidebar + centred content area
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: Row(
+        children: [
+          DesktopSidebar(
+            selectedIndex: _index,
+            onSelect: (i) => setState(() => _index = i),
+            onCreate: () => showCreateSheet(context),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: content,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -97,9 +133,14 @@ class _NavItem extends StatelessWidget {
               ),
               child: Icon(icon, color: color),
             ),
-            Text(label,
-                style: TextStyle(
-                    color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),
