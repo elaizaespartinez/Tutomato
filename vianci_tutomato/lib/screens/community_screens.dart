@@ -8,12 +8,31 @@ class WardrobeScreen extends StatefulWidget {
     required this.points,
     required this.onOpenProfile,
     required this.onPurchase,
+    required this.ownedItems,
+    required this.onOwn,
+    this.equippedHeadwear = TomatoHeadwear.none,
+    this.equippedProp = TomatoProp.none,
+    this.equippedColorway = TomatoColorway.classic,
+    this.onEquipHeadwear,
+    this.onEquipProp,
+    this.onEquipColorway,
     super.key,
   });
 
   final int points;
   final VoidCallback onOpenProfile;
   final ValueChanged<int> onPurchase;
+  /// All item names the user currently owns — lives in [_TutomatoHomeState]
+  /// so it survives tab switches.
+  final Set<String> ownedItems;
+  /// Called when a new item is purchased so the parent can record ownership.
+  final ValueChanged<String> onOwn;
+  final TomatoHeadwear equippedHeadwear;
+  final TomatoProp equippedProp;
+  final TomatoColorway equippedColorway;
+  final ValueChanged<TomatoHeadwear>? onEquipHeadwear;
+  final ValueChanged<TomatoProp>? onEquipProp;
+  final ValueChanged<TomatoColorway>? onEquipColorway;
 
   @override
   State<WardrobeScreen> createState() => _WardrobeScreenState();
@@ -24,7 +43,26 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   String _outfit = 'Classic';
   String _color = 'Classic';
   String _extra = 'None';
-  final Set<String> _owned = {'Classic', 'None'};
+
+  @override
+  void initState() {
+    super.initState();
+    _outfit = switch (widget.equippedHeadwear) {
+      TomatoHeadwear.scholarHat => 'Scholar',
+      TomatoHeadwear.headphones => 'Cozy',
+      TomatoHeadwear.none => 'Classic',
+    };
+    _color = switch (widget.equippedColorway) {
+      TomatoColorway.classic => 'Classic',
+      TomatoColorway.golden => 'Golden',
+      TomatoColorway.rosy => 'Rosy',
+    };
+    _extra = switch (widget.equippedProp) {
+      TomatoProp.glasses => 'Glasses',
+      TomatoProp.books => 'Study book',
+      TomatoProp.none => 'None',
+    };
+  }
 
   static const _outfits = [
     _WardrobeItem('Classic', 'Free', Icons.spa_outlined, 0),
@@ -55,7 +93,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   };
 
   void _selectItem(_WardrobeItem item) {
-    if (!_owned.contains(item.name)) {
+    if (!widget.ownedItems.contains(item.name)) {
       if (widget.points < item.cost) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Not quite enough Study Points yet.')),
@@ -63,12 +101,36 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
         return;
       }
       widget.onPurchase(item.cost);
-      setState(() => _owned.add(item.name));
+      widget.onOwn(item.name);
     }
     setState(() {
-      if (_tab == 0) _outfit = item.name;
-      if (_tab == 1) _color = item.name;
-      if (_tab == 2) _extra = item.name;
+      if (_tab == 0) {
+        _outfit = item.name;
+        final hw = switch (item.name) {
+          'Scholar' => TomatoHeadwear.scholarHat,
+          'Cozy' => TomatoHeadwear.headphones,
+          _ => TomatoHeadwear.none,
+        };
+        widget.onEquipHeadwear?.call(hw);
+      }
+      if (_tab == 1) {
+        _color = item.name;
+        final cw = switch (item.name) {
+          'Golden' => TomatoColorway.golden,
+          'Rosy' => TomatoColorway.rosy,
+          _ => TomatoColorway.classic,
+        };
+        widget.onEquipColorway?.call(cw);
+      }
+      if (_tab == 2) {
+        _extra = item.name;
+        final p = switch (item.name) {
+          'Glasses' => TomatoProp.glasses,
+          'Study book' => TomatoProp.books,
+          _ => TomatoProp.none,
+        };
+        widget.onEquipProp?.call(p);
+      }
     });
   }
 
@@ -126,7 +188,12 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const TomatoMascot(size: 176),
+                TomatoMascotWithAccessories(
+                  size: 176,
+                  colorway: widget.equippedColorway,
+                  headwear: widget.equippedHeadwear,
+                  prop: widget.equippedProp,
+                ),
                 const SizedBox(height: 3),
                 const Text('Looking ripe, Pip!', style: AppTextStyles.heading),
                 const SizedBox(height: 6),
@@ -195,8 +262,29 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   child: _WardrobeCard(
                     item: _items[index],
                     equipped: _equipped == _items[index].name,
-                    owned: _owned.contains(_items[index].name),
+                    owned: widget.ownedItems.contains(_items[index].name),
                     onTap: () => _selectItem(_items[index]),
+                    previewHeadwear: _tab == 0
+                        ? switch (_items[index].name) {
+                            'Scholar' => TomatoHeadwear.scholarHat,
+                            'Cozy' => TomatoHeadwear.headphones,
+                            _ => TomatoHeadwear.none,
+                          }
+                        : null,
+                    previewColorway: _tab == 1
+                        ? switch (_items[index].name) {
+                            'Golden' => TomatoColorway.golden,
+                            'Rosy' => TomatoColorway.rosy,
+                            _ => TomatoColorway.classic,
+                          }
+                        : null,
+                    previewProp: _tab == 2
+                        ? switch (_items[index].name) {
+                            'Glasses' => TomatoProp.glasses,
+                            'Study book' => TomatoProp.books,
+                            _ => TomatoProp.none,
+                          }
+                        : null,
                   ),
                 ),
               ],
@@ -275,15 +363,25 @@ class _WardrobeCard extends StatelessWidget {
     required this.equipped,
     required this.owned,
     required this.onTap,
+    this.previewHeadwear,
+    this.previewColorway,
+    this.previewProp,
   });
 
   final _WardrobeItem item;
   final bool equipped;
   final bool owned;
   final VoidCallback onTap;
+  final TomatoHeadwear? previewHeadwear;
+  final TomatoColorway? previewColorway;
+  final TomatoProp? previewProp;
 
   @override
   Widget build(BuildContext context) {
+    final isMascotPreview = previewHeadwear != null ||
+        previewColorway != null ||
+        previewProp != null;
+
     return Material(
       color: AppColors.card,
       borderRadius: BorderRadius.circular(19),
@@ -304,39 +402,16 @@ class _WardrobeCard extends StatelessWidget {
             children: [
               SizedBox(
                 height: 70,
-                child: item.name == 'Study book'
-                    ? Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          const TomatoMascot(size: 72),
-                          Positioned(
-                            bottom: 1,
-                            right: 3,
-                            child: Icon(
-                              item.icon,
-                              color: AppColors.brown,
-                              size: 31,
-                            ),
-                          ),
-                        ],
-                      )
-                    : item.name == 'Glasses'
-                    ? Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          const TomatoMascot(size: 72),
-                          Icon(item.icon, color: AppColors.brown, size: 27),
-                        ],
-                      )
-                    : item.name == 'Golden' || item.name == 'Rosy'
-                    ? Icon(
-                        Icons.circle,
-                        size: 55,
-                        color: item.name == 'Golden'
-                            ? const Color(0xFFFFC44D)
-                            : const Color(0xFFE5819A),
-                      )
-                    : Icon(item.icon, size: 51, color: AppColors.green),
+                child: Center(
+                  child: isMascotPreview
+                      ? TomatoMascotWithAccessories(
+                          size: 70,
+                          colorway: previewColorway ?? TomatoColorway.classic,
+                          headwear: previewHeadwear ?? TomatoHeadwear.none,
+                          prop: previewProp ?? TomatoProp.none,
+                        )
+                      : Icon(item.icon, size: 51, color: AppColors.green),
+                ),
               ),
               const SizedBox(height: 5),
               Text(

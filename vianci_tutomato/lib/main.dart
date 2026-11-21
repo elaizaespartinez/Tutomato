@@ -77,13 +77,17 @@ class _TutomatoHomeState extends State<_TutomatoHome> {
   String _activeTaskId = '';
   String _activeTaskTitle = 'Cell division review';
   String _activeTaskSubject = 'Biology';
-  int _points = 240;
+  int _points = 999;
   int _focusMinutes = 25;
   int _breakMinutes = 5;
   int _rounds = 4;
   int _completedSessions = 2;
   int _focusMinutesToday = 50;
   bool _isBreak = false;
+  TomatoHeadwear _equippedHeadwear = TomatoHeadwear.none;
+  TomatoProp _equippedProp = TomatoProp.none;
+  TomatoColorway _equippedColorway = TomatoColorway.classic;
+  final Set<String> _ownedWardrobeItems = {'Classic', 'None'};
 
   bool get _hasBottomNav => switch (_page) {
     AppPage.home ||
@@ -306,6 +310,9 @@ class _TutomatoHomeState extends State<_TutomatoHome> {
           tasks: _tasks,
           todayMinutes: _focusMinutesToday,
           completedSessions: _completedSessions,
+          equippedHeadwear: _equippedHeadwear,
+          equippedProp: _equippedProp,
+          equippedColorway: _equippedColorway,
           onOpenProfile: () => _navigate(AppPage.profile),
           onOpenLearn: () => _navigate(AppPage.learn),
           onStartSession: _openSetup,
@@ -336,6 +343,9 @@ class _TutomatoHomeState extends State<_TutomatoHome> {
           subject: _activeTaskSubject,
           durationMinutes: _focusMinutes,
           rounds: _rounds,
+          equippedHeadwear: _equippedHeadwear,
+          equippedProp: _equippedProp,
+          equippedColorway: _equippedColorway,
           onEnd: () => _finishSession(completed: false),
           onComplete: () => _finishSession(completed: true),
         );
@@ -350,6 +360,9 @@ class _TutomatoHomeState extends State<_TutomatoHome> {
               false,
           points: 25,
           totalPoints: _points,
+          equippedHeadwear: _equippedHeadwear,
+          equippedProp: _equippedProp,
+          equippedColorway: _equippedColorway,
           onMarkDone: () => _toggleTask(_activeTaskId),
           onStartBreak: _startBreak,
           onHome: () => _navigate(AppPage.home),
@@ -357,8 +370,16 @@ class _TutomatoHomeState extends State<_TutomatoHome> {
       case AppPage.wardrobe:
         return WardrobeScreen(
           points: _points,
+          equippedHeadwear: _equippedHeadwear,
+          equippedProp: _equippedProp,
+          equippedColorway: _equippedColorway,
+          ownedItems: _ownedWardrobeItems,
+          onEquipHeadwear: (hw) => setState(() => _equippedHeadwear = hw),
+          onEquipProp: (prop) => setState(() => _equippedProp = prop),
+          onEquipColorway: (cw) => setState(() => _equippedColorway = cw),
           onOpenProfile: () => _navigate(AppPage.profile),
           onPurchase: (cost) => setState(() => _points -= cost),
+          onOwn: (name) => setState(() => _ownedWardrobeItems.add(name)),
         );
       case AppPage.records:
         return RecordsScreen(

@@ -17,6 +17,9 @@ class HomeScreen extends StatelessWidget {
     required this.onOpenLearn,
     required this.onStartSession,
     required this.onToggleTask,
+    this.equippedHeadwear = TomatoHeadwear.none,
+    this.equippedProp = TomatoProp.none,
+    this.equippedColorway = TomatoColorway.classic,
     super.key,
   });
 
@@ -29,6 +32,9 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onOpenLearn;
   final VoidCallback onStartSession;
   final ValueChanged<String> onToggleTask;
+  final TomatoHeadwear equippedHeadwear;
+  final TomatoProp equippedProp;
+  final TomatoColorway equippedColorway;
 
   @override
   Widget build(BuildContext context) {
@@ -124,9 +130,16 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                   flex: 4,
-                  child: Center(child: TomatoMascot(size: 132)),
+                  child: Center(
+                    child: TomatoMascotWithAccessories(
+                      size: 132,
+                      colorway: equippedColorway,
+                      headwear: equippedHeadwear,
+                      prop: equippedProp,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -946,6 +959,9 @@ class FocusSessionScreen extends StatefulWidget {
     required this.rounds,
     required this.onEnd,
     required this.onComplete,
+    this.equippedHeadwear = TomatoHeadwear.none,
+    this.equippedProp = TomatoProp.none,
+    this.equippedColorway = TomatoColorway.classic,
     super.key,
   });
 
@@ -955,6 +971,9 @@ class FocusSessionScreen extends StatefulWidget {
   final int rounds;
   final VoidCallback onEnd;
   final VoidCallback onComplete;
+  final TomatoHeadwear equippedHeadwear;
+  final TomatoProp equippedProp;
+  final TomatoColorway equippedColorway;
 
   @override
   State<FocusSessionScreen> createState() => _FocusSessionScreenState();
@@ -1062,7 +1081,12 @@ class _FocusSessionScreenState extends State<FocusSessionScreen> {
                       style: AppTextStyles.body.copyWith(fontSize: 14),
                     ),
                     const SizedBox(height: 15),
-                    const TomatoMascot(size: 94),
+                    TomatoMascotWithAccessories(
+                      size: 94,
+                      colorway: widget.equippedColorway,
+                      headwear: widget.equippedHeadwear,
+                      prop: widget.equippedProp,
+                    ),
                   ],
                 ),
               ],
@@ -1174,6 +1198,9 @@ class SessionCompleteScreen extends StatelessWidget {
     required this.onMarkDone,
     required this.onStartBreak,
     required this.onHome,
+    this.equippedHeadwear = TomatoHeadwear.none,
+    this.equippedProp = TomatoProp.none,
+    this.equippedColorway = TomatoColorway.classic,
     super.key,
   });
 
@@ -1184,6 +1211,9 @@ class SessionCompleteScreen extends StatelessWidget {
   final VoidCallback onMarkDone;
   final VoidCallback onStartBreak;
   final VoidCallback onHome;
+  final TomatoHeadwear equippedHeadwear;
+  final TomatoProp equippedProp;
+  final TomatoColorway equippedColorway;
 
   @override
   Widget build(BuildContext context) {
@@ -1194,7 +1224,14 @@ class SessionCompleteScreen extends StatelessWidget {
         children: [
           PageTitle(title: 'Your little win', onBack: onHome, size: 26),
           const SizedBox(height: 28),
-          const Center(child: TomatoMascot(size: 176)),
+          Center(
+            child: TomatoMascotWithAccessories(
+              size: 176,
+              colorway: equippedColorway,
+              headwear: equippedHeadwear,
+              prop: equippedProp,
+            ),
+          ),
           const SizedBox(height: 12),
           const Center(
             child: Text('Session complete!', style: AppTextStyles.heading),
