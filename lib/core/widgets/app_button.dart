@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
 
 enum AppButtonKind { filled, outlined, text }
 
-/// Full-width pill button. `kind` picks filled, outlined, or a plain text link.
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -23,7 +23,7 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bigText = TextStyle(fontSize: 18, fontWeight: FontWeight.w800);
+    final bigText = GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w700);
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -67,7 +67,7 @@ class AppButton extends StatelessWidget {
           onPressed: onPressed,
           style: TextButton.styleFrom(
             foregroundColor: color,
-            textStyle: const TextStyle(
+            textStyle: GoogleFonts.fredoka(
               fontSize: 17,
               fontWeight: FontWeight.w700,
             ),
