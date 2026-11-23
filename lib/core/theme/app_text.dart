@@ -3,32 +3,32 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppText {
-  static final h1 = GoogleFonts.fredoka(
+  static const h1 = TextStyle(
     fontSize: 34,
     fontWeight: FontWeight.w700,
     color: AppColors.brown,
     height: 1.1,
   );
 
-  static final h2 = GoogleFonts.fredoka(
+  static const h2 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppColors.brown,
   );
 
-  static final title = GoogleFonts.fredoka(
+  static const title = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
     color: AppColors.brown,
   );
 
-  static final body = GoogleFonts.fredoka(
+  static const body = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w500,
     color: AppColors.brownSoft,
   );
 
-  static final small = GoogleFonts.fredoka(
+  static const small = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w400,
     color: AppColors.brownSoft,
