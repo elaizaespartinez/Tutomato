@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tutomato/features/playground/playground_screens.dart';
-import 'package:tutomato/providers/core_providers.dart';
+import 'core/routes.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/app_theme.dart';
+import 'providers/core_providers.dart';
+import 'screens/auth/welcome_screen.dart';
+import 'screens/shell/main_shell.dart';
 
 class TutomatoApp extends StatelessWidget {
   const TutomatoApp({super.key});
@@ -11,31 +15,29 @@ class TutomatoApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tutomato',
       debugShowCheckedModeBanner: false,
-      // Placeholder theme. The real design (cream background, tomato red,
-      // leaf green) comes with the UI.
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFFE03E2D),
-        scaffoldBackgroundColor: const Color(0xFFFFF1E3),
-      ),
+      theme: AppTheme.light,
       home: const AuthGate(),
+      routes: AppRoutes.table,
     );
   }
 }
 
-/// Logged out -> auth screen. Logged in -> home. When the UI team builds the
-/// real screens, replace the two placeholder screens below and keep this gate.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authStateProvider);
-    return auth.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
-      data: (user) =>
-          user == null ? const AuthPlaceholderScreen() : const HomePlaceholderScreen(),
+    final authState = ref.watch(authStateProvider);
+    return authState.when(
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.cream,
+        body: Center(child: CircularProgressIndicator(color: AppColors.tomato)),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: AppColors.cream,
+        body: Center(child: Text('Error: $e')),
+      ),
+      data: (user) => user == null ? const WelcomeScreen() : const MainShell(),
     );
   }
 }
