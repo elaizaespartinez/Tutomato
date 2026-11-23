@@ -4,12 +4,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import 'page_width.dart';
 
-/// A full screen with a back (or close) button, a title, and a scrolling body.
 class AppPage extends StatelessWidget {
   final String? title;
   final Widget? titleWidget;
   final bool showBack;
-  final bool close; // show an X instead of the back arrow
+  final bool close;
   final VoidCallback? onBack;
   final double maxWidth;
   final List<Widget> children;
@@ -70,7 +69,6 @@ class AppPage extends StatelessWidget {
   }
 }
 
-/// The small centred line at the bottom of many screens.
 class FooterNote extends StatelessWidget {
   final String text;
   const FooterNote(this.text, {super.key});
@@ -92,26 +90,25 @@ class FooterNote extends StatelessWidget {
   );
 }
 
-/// The centred "Tutomato" wordmark used in the login and sign-up header.
 class BrandHeader extends StatelessWidget {
   const BrandHeader({super.key});
 
   @override
-  Widget build(BuildContext context) => const Row(
+  Widget build(BuildContext context) => Row(
     children: [
       Expanded(
         child: Center(
           child: Text(
             'Tutomato',
-            style: TextStyle(
+            style: AppText.brandStyle(
               fontSize: 28,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.tomato,
             ),
           ),
         ),
       ),
-      SizedBox(width: 48),
+      const SizedBox(width: 48),
     ],
   );
 }

@@ -16,12 +16,12 @@ class WelcomeScreen extends StatelessWidget {
       showBack: false,
       children: [
         const SizedBox(height: 8),
-        const Center(
+        Center(
           child: Text(
             'Tutomato',
-            style: TextStyle(
+            style: AppText.brandStyle(
               fontSize: 30,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.tomato,
             ),
           ),

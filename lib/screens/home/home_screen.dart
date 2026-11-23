@@ -59,18 +59,18 @@ class HomeScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
-        const Row(
+        Row(
           children: [
             Text(
               'Tutomato',
-              style: TextStyle(
+              style: AppText.brandStyle(
                 fontSize: 30,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: AppColors.tomato,
               ),
             ),
-            Spacer(),
-            ProfileButton(),
+            const Spacer(),
+            const ProfileButton(),
           ],
         ),
         const SizedBox(height: 20),
