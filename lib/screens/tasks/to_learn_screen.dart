@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/day_keys.dart';
 import '../../core/format.dart';
 import '../../core/routes.dart';
 import '../../core/theme/app_colors.dart';
@@ -104,7 +105,7 @@ class _ToLearnScreenState extends ConsumerState<ToLearnScreen> {
     final todo = taskGroups.todo;
     final today = taskGroups.today;
     final upcoming = taskGroups.upcoming;
-    final done = taskGroups.completed;
+    final done = taskGroups.done;
 
     return AppPage(
       title: 'To Learn',
@@ -241,6 +242,7 @@ class _TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = task.isDone;
+    final today = dayKey(DateTime.now());
     return AppCard(
       padding: EdgeInsets.zero,
       child: InkWell(
@@ -284,7 +286,7 @@ class _TaskCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${task.subject} · ${done ? 'Completed' : dueLabel(task.dueDay)}',
+                      '${task.subject} · ${done ? 'Completed' : dueLabel(task.dueDay, today)}',
                       style: AppText.body,
                     ),
                     const SizedBox(height: 6),

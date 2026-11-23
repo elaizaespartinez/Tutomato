@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/async_utils.dart';
-
+import '../../core/day_keys.dart';
+import '../../core/format.dart';
 import '../../core/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
@@ -19,9 +20,31 @@ class HomeScreen extends ConsumerWidget {
   final VoidCallback onOpenPomodori;
   const HomeScreen({super.key, required this.onOpenPomodori});
 
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
     final taskGroups = ref.watch(taskGroupsProvider);
 
     return Responsive.isDesktop(context)
@@ -32,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
   String _streakText(int streak) => '$streak ${streak == 1 ? 'day' : 'days'}';
 
   Widget _phoneLayout(BuildContext context, WidgetRef ref, UserProfile profile, List<StudyTask> todayTasks) {
-    final today = DateTime.now();
+    final today = dayKey(DateTime.now());
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
@@ -69,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _desktopLayout(BuildContext context, WidgetRef ref, UserProfile profile, List<StudyTask> todayTasks) {
-    final today = DateTime.now();
+    final today = dayKey(DateTime.now());
     final todayMinutes = profile.minutesOn(today);
     final todaySessions = profile.sessionsOn(today);
     final streak = profile.streakOn(today);
@@ -548,6 +571,7 @@ class _PipCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       side: const BorderSide(color: AppColors.border),
     );
+    final ripenessFraction = (profile.ripeness / 100.0).clamp(0.0, 1.0);
     return Material(
       color: AppColors.peach,
       shape: shape,
@@ -567,14 +591,14 @@ class _PipCard extends StatelessWidget {
                     Text('Looking ripe, ${profile.displayName}!', style: AppText.title),
                     const SizedBox(height: 4),
                     Text(
-                      'Level ${profile.level} · Ripeness ${(profile.ripeness * 100).round()}%',
+                      'Level ${profile.level} · Ripeness ${profile.ripeness}%',
                       style: AppText.small,
                     ),
                     const SizedBox(height: 10),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(
-                        value: profile.ripeness.clamp(0.0, 1.0),
+                        value: ripenessFraction,
                         minHeight: 10,
                         backgroundColor: Colors.white,
                         color: AppColors.leaf,

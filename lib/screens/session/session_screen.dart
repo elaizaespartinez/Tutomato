@@ -24,6 +24,28 @@ const double _kWideMaxWidth = 980;
 class SessionScreen extends ConsumerWidget {
   const SessionScreen({super.key});
 
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
+
   bool _isWide(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= _kWideBreakpoint;
 
@@ -132,12 +154,12 @@ class SessionScreen extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        formatClock(state.remaining.inSeconds),
+                        formatClock(state.remaining),
                         style: AppText.h1.copyWith(fontSize: size * 0.21),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'of ${formatClock(state.config.focusMinutes * 60)} · Round ${state.round} of ${state.config.rounds}',
+                        'of ${formatClock(Duration(minutes: state.config.focusMinutes))} · Round ${state.round} of ${state.config.rounds}',
                         style: AppText.small,
                       ),
                     ],
@@ -325,7 +347,7 @@ class SessionScreen extends ConsumerWidget {
     ),
     const SizedBox(height: 8),
     Text(
-      formatClock(state.remaining.inSeconds),
+      formatClock(state.remaining),
       textAlign: TextAlign.center,
       style: AppText.h1.copyWith(fontSize: 72, color: Colors.white),
     ),
@@ -456,7 +478,7 @@ class SessionScreen extends ConsumerWidget {
   Widget _statsCard(UserProfile profile, TimerState state) {
     final reward = state.reward;
     final pointsEarned = reward?.pointsEarned ?? state.pointsOnFinish;
-    final ripenessGain = (reward?.ripenessGained ?? kRipenessPerSession) * 100;
+    final ripenessGain = reward?.ripenessGain ?? AppConstants.ripenessPerSession;
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Column(
@@ -467,7 +489,7 @@ class SessionScreen extends ConsumerWidget {
             star: true,
           ),
           const Divider(height: 1, color: AppColors.border),
-          _StatRow(label: 'Pomodori ripeness', value: '+${ripenessGain.round()}%'),
+          _StatRow(label: 'Pomodori ripeness', value: '+$ripenessGain%'),
           const Divider(height: 1, color: AppColors.border),
           _StatRow(
             label: 'Daily streak',
@@ -479,7 +501,7 @@ class SessionScreen extends ConsumerWidget {
   }
 
   Widget _totalLine(UserProfile profile) => Text(
-    '${profile.points} points total · Pomodori is ${(profile.ripeness * 100).round()}% ripe',
+    '${profile.points} points total · Pomodori is ${profile.ripeness}% ripe',
     textAlign: TextAlign.center,
     style: const TextStyle(color: AppColors.leaf, fontSize: 15),
   );
@@ -517,7 +539,7 @@ class SessionScreen extends ConsumerWidget {
   }
 
   Widget _complete(BuildContext context, WidgetRef ref, TimerState state) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
     final last = state.isFinalRound;
 
     final hero = <Widget>[
@@ -593,7 +615,7 @@ class SessionScreen extends ConsumerWidget {
   // ==== 2. Lock-in broken ("A fresh start") ================================
 
   Widget _lockBroken(BuildContext context, WidgetRef ref, TimerState state) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
     final broken = state.broken;
 
     final hero = <Widget>[
@@ -612,7 +634,7 @@ class SessionScreen extends ConsumerWidget {
       ),
       const SizedBox(height: 8),
       Text(
-        'You left with ${formatClock(state.remaining.inSeconds)} still on the timer,\nso this session didn’t count.',
+        'You left with ${formatClock(state.remaining)} still on the timer,\nso this session didn’t count.',
         textAlign: TextAlign.center,
         style: AppText.body,
       ),

@@ -31,7 +31,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     final prefs = ref.read(prefsServiceProvider);
-    _email.text = prefs.rememberedEmail;
+    _email.text = prefs.rememberedEmail ?? '';
     _remember = prefs.rememberMe;
   }
 
@@ -57,7 +57,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .signIn(email, password, rememberMe: _remember);
+          .signIn(email: email, password: password, rememberMe: _remember);
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }

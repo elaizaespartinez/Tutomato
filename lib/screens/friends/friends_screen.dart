@@ -10,6 +10,7 @@ import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/pomodori_image.dart';
 import '../../core/widgets/tab_page.dart';
+import '../../models/friends.dart';
 import '../../models/user_profile.dart';
 import '../../providers/actions.dart';
 import '../../providers/data_providers.dart';
@@ -23,6 +24,28 @@ class FriendsScreen extends ConsumerStatefulWidget {
 
 class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   final _codeController = TextEditingController();
+
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
 
   @override
   void dispose() {
@@ -159,10 +182,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
     final friendCards = ref.watch(friendCardsProvider);
     final hero = ref.watch(friendsHeroProvider);
-    final cheers = ref.watch(cheersProvider);
+    final cheers = ref.watch(cheersProvider).dataOrNull ?? const <Cheer>[];
 
     final cheeredSet = cheers.map((c) => c.fromUid).toSet();
 
@@ -208,7 +231,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          card.friendName,
+                          card.name,
                           style: AppText.h2.copyWith(fontSize: 20),
                         ),
                         Text(
@@ -217,9 +240,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          card.statusLabel,
+                          card.statusText,
                           style: TextStyle(
-                            color: card.isFocusingNow ? AppColors.tomato : AppColors.leaf,
+                            color: card.status == FriendStatusKind.focusingNow ? AppColors.tomato : AppColors.leaf,
                             fontSize: 14,
                           ),
                         ),
@@ -227,8 +250,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                     ),
                   ),
                   _CheerButton(
-                    cheered: cheeredSet.contains(card.friendUid),
-                    onTap: () => _cheer(card.friendUid, card.friendName),
+                    cheered: cheeredSet.contains(card.uid),
+                    onTap: () => _cheer(card.uid, card.name),
                   ),
                 ],
               ),
@@ -265,6 +288,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   Widget _sharedStreakCard(FriendsHero hero, String myName) {
+    final friendCard = hero.friend;
     return AppCard(
       color: AppColors.peach,
       padding: const EdgeInsets.all(20),
@@ -272,7 +296,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'YOU + ${hero.friendName.toUpperCase()}',
+            'YOU + ${friendCard.name.toUpperCase()}',
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -282,19 +306,19 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${hero.sharedStreak} ${hero.sharedStreak == 1 ? 'day' : 'days'} of showing up',
+            '${friendCard.sharedStreak} ${friendCard.sharedStreak == 1 ? 'day' : 'days'} of showing up',
             style: AppText.h2.copyWith(fontSize: 30),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _Buddy(name: hero.iFocusedToday ? '$myName ✓' : myName),
+              _Buddy(name: myName),
               const SizedBox(width: 20),
               _Buddy(
-                name: hero.friendFocusedToday
-                    ? '${hero.friendName} ✓'
-                    : hero.friendName,
+                name: friendCard.focusedToday
+                    ? '${friendCard.name} ✓'
+                    : friendCard.name,
               ),
             ],
           ),
@@ -307,7 +331,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               borderRadius: BorderRadius.circular(24),
             ),
             child: Text(
-              '${(hero.iFocusedToday ? 1 : 0) + (hero.friendFocusedToday ? 1 : 0)} of 2 focused today · Keep it growing',
+              '${hero.focusedCount} of 2 focused today · Keep it growing',
               textAlign: TextAlign.center,
               style: AppText.body,
             ),

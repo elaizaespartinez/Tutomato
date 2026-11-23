@@ -7,26 +7,47 @@ import '../../core/async_utils.dart';
 import '../../core/format.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
-import '../../core/utils/date_helpers.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/tab_page.dart';
-import '../../logic/records.dart';
 import '../../models/user_profile.dart';
 import '../../providers/data_providers.dart';
 
 class RecordsScreen extends ConsumerWidget {
   const RecordsScreen({super.key});
 
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedWeek = ref.watch(selectedWeekProvider);
     final stats = ref.watch(weeklyStatsProvider(selectedWeek));
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
 
     final todayIndex = DateTime.now().weekday - 1;
-    final totalMinutes = stats.totalMinutes;
-    final totalSessions = stats.totalSessions;
-    final dayMinutes = stats.dayMinutes;
+    final totalMinutes = stats?.totalMinutes ?? 0;
+    final totalSessions = stats?.sessionsCompleted ?? 0;
+    final dayMinutes = stats?.minutesPerDay ?? List.filled(7, 0);
+    final todaySessions = stats?.todaySessions ?? const [];
 
     return TabPage(
       title: 'Your records',
@@ -59,13 +80,13 @@ class RecordsScreen extends ConsumerWidget {
         const SizedBox(height: 24),
         Text('Today’s sessions', style: AppText.h2.copyWith(fontSize: 26)),
         const SizedBox(height: 12),
-        if (stats.todaySessions.isEmpty)
+        if (todaySessions.isEmpty)
           const Text(
             'No sessions yet today. Start one to see it here.',
             style: AppText.body,
           )
         else
-          for (final s in stats.todaySessions)
+          for (final s in todaySessions)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
@@ -129,9 +150,8 @@ class RecordsScreen extends ConsumerWidget {
       child: InkWell(
         customBorder: const StadiumBorder(),
         onTap: () {
-          // Toggle between this week and last week
           final now = DateTime.now();
-          if (sameDay(selectedWeek, now)) {
+          if (selectedWeek.year == now.year && selectedWeek.month == now.month && selectedWeek.day == now.day) {
             ref.read(selectedWeekProvider.notifier).state = now.subtract(const Duration(days: 7));
           } else {
             ref.read(selectedWeekProvider.notifier).state = now;

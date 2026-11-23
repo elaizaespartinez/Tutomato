@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_exception.dart';
 import '../../core/async_utils.dart';
+import '../../core/constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/app_card.dart';
@@ -23,6 +24,28 @@ class PomodoriScreen extends ConsumerStatefulWidget {
 
 class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
   ShopCategory _category = ShopCategory.outfit;
+
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
 
   static const _tabs = [
     (ShopCategory.outfit, 'Outfits'),
@@ -63,7 +86,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
 
   Future<void> _choose(ShopItem item) async {
     try {
-      await ref.read(actionsProvider).buyAndEquipItem(item);
+      await ref.read(actionsProvider).buyAndEquipItem(item.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Equipped ${item.name}!'), backgroundColor: AppColors.leaf),
@@ -85,7 +108,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
   }
 
   Widget _wardrobeCard(UserProfile profile) {
-    final percent = (profile.ripeness * 100).round();
+    final ripenessFraction = (profile.ripeness / 100.0).clamp(0.0, 1.0);
     return AppCard(
       color: AppColors.peach,
       padding: const EdgeInsets.all(20),
@@ -149,7 +172,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
               Text('Level ${profile.level} · Ripeness', style: AppText.body),
               const Spacer(),
               Text(
-                '$percent%',
+                '${profile.ripeness}%',
                 style: const TextStyle(
                   color: AppColors.leaf,
                   fontWeight: FontWeight.w700,
@@ -161,7 +184,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: profile.ripeness.clamp(0.0, 1.0),
+              value: ripenessFraction,
               minHeight: 12,
               backgroundColor: Colors.white,
               color: AppColors.leaf,
@@ -174,8 +197,8 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
 
   Widget _itemCard(ShopEntry entry) {
     final item = entry.item;
-    final equipped = entry.isEquipped;
-    final owned = entry.isOwned;
+    final equipped = entry.equipped;
+    final owned = entry.owned;
 
     final avatar = PomodoriAvatar(
       size: 84,
@@ -196,7 +219,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
       statusBg = AppColors.peach;
       statusText = AppColors.brown;
     } else {
-      status = 'Buy · ${item.price} pts';
+      status = 'Buy · ${item.cost} pts';
       statusBg = AppColors.peach;
       statusText = AppColors.brown;
     }
@@ -260,7 +283,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
     final shopEntries = ref.watch(shopEntriesProvider(_category));
     final footer = _footer;
 

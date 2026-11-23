@@ -20,6 +20,28 @@ import '../../providers/data_providers.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
+
   Future<T?> _pickOne<T>(
       BuildContext context,
       String title,
@@ -132,7 +154,7 @@ class ProfileScreen extends ConsumerWidget {
                 Text(profile.email, style: AppText.body),
                 const SizedBox(height: 6),
                 Text(
-                  'Growing since ${growingSinceLabel(profile.createdAt)}',
+                  growingSinceLabel(profile.createdAt),
                   style: const TextStyle(color: AppColors.leaf, fontSize: 14),
                 ),
               ],
@@ -240,7 +262,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final desktop = Responsive.isDesktop(context);
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
 
     return AppPage(
       title: 'Your profile',

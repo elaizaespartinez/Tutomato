@@ -17,7 +17,6 @@ import '../../models/study_task.dart';
 import '../../models/user_profile.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/timer_controller.dart';
-import '../../services/dnd_service.dart';
 
 const double _kWideBreakpoint = 800;
 
@@ -35,13 +34,35 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   String _taskId = '';
   bool _initializedDefaults = false;
 
+  static final _fallbackProfile = UserProfile(
+    uid: '',
+    displayName: 'Student',
+    email: '',
+    createdAt: DateTime.now(),
+    points: 0,
+    level: 1,
+    ripeness: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastActiveDay: null,
+    todayDay: null,
+    todayMinutes: 0,
+    todaySessions: 0,
+    totalSessions: 0,
+    totalFocusMinutes: 0,
+    equipped: const EquippedItems(),
+    ownedItemIds: const [],
+    settings: const TimerSettings(),
+    inviteCode: '',
+  );
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_initializedDefaults) return;
     _initializedDefaults = true;
 
-    final profile = ref.read(userProfileProvider).dataOrNull ?? UserProfile.fallback();
+    final profile = ref.read(userProfileProvider).dataOrNull ?? _fallbackProfile;
     _focus = profile.settings.focusMinutes;
     _rest = profile.settings.breakMinutes;
     _rounds = profile.settings.rounds;
@@ -70,7 +91,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
     Navigator.pushReplacementNamed(context, AppRoutes.focus);
   }
 
-  Widget _presetCard(RhythmPreset p) {
+  Widget _presetCard(TimerPreset p) {
     final selected = _focus == p.focus && _rest == p.rest;
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(20),
@@ -214,7 +235,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
   );
 
   Widget _startButton(List<StudyTask> todoTasks) => AppButton(
-    'Start ${formatClock(_focus * 60)} focus',
+    'Start ${formatClock(Duration(minutes: _focus))} focus',
     color: AppColors.leaf,
     onPressed: () => _start(todoTasks),
   );
