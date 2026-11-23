@@ -11,7 +11,7 @@ import '../screens/tasks/add_task_screen.dart';
 import '../screens/tasks/to_learn_screen.dart';
 
 class AppRoutes {
-  static const shell = '/';
+  static const shell = '/shell';
   static const welcome = '/welcome';
   static const login = '/login';
   static const signup = '/signup';
