@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'core/routes.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
@@ -37,7 +38,23 @@ class AuthGate extends ConsumerWidget {
         backgroundColor: AppColors.cream,
         body: Center(child: Text('Error: $e')),
       ),
-      data: (user) => user == null ? const WelcomeScreen() : const MainShell(),
+      data: (user) {
+        if (user != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
+          });
+          return KeyedSubtree(
+            key: ValueKey('main_shell_${user.uid}'),
+            child: const MainShell(),
+          );
+        }
+        return const KeyedSubtree(
+          key: ValueKey('welcome_screen'),
+          child: WelcomeScreen(),
+        );
+      },
     );
   }
 }

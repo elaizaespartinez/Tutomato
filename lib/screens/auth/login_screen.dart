@@ -58,9 +58,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .signIn(email: email, password: password, rememberMe: _remember);
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
     } on AppException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

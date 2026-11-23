@@ -73,9 +73,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             password: pass,
             confirmPassword: _confirm.text,
           );
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
     } on AppException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
