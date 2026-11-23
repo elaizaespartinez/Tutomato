@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -10,6 +11,6 @@ class AppTheme {
       primary: AppColors.tomato,
       surface: AppColors.cream,
     ),
-    // fontFamily: 'Nunito', // add once you bundle the fonts
+    textTheme: GoogleFonts.nunitoTextTheme(),
   );
 }

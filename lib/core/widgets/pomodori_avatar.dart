@@ -4,14 +4,11 @@ import 'package:flutter/material.dart';
 
 import 'pomodori_image.dart';
 
-// Pip with a colour, an outfit and an extra on top.
-// Looks for assets/images/pomodori_<color>.png, outfit_<name>.png and
-// extra_<name>.png, and draws simple versions if the files are missing.
 class PomodoriAvatar extends StatelessWidget {
   final double size;
-  final String color; // classic | golden | rosy
-  final String outfit; // classic | scholar | cozy
-  final String extra; // none | glasses | book
+  final String color;
+  final String outfit;
+  final String extra;
 
   const PomodoriAvatar({
     super.key,
@@ -21,8 +18,16 @@ class PomodoriAvatar extends StatelessWidget {
     this.extra = 'none',
   });
 
+  static String cleanKey(String key) {
+    if (key.contains('_')) {
+      return key.substring(key.indexOf('_') + 1);
+    }
+    return key;
+  }
+
   static Color bodyOf(String color) {
-    switch (color) {
+    final clean = cleanKey(color);
+    switch (clean) {
       case 'golden':
         return const Color(0xFFE6B02E);
       case 'rosy':
@@ -34,6 +39,10 @@ class PomodoriAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cKey = cleanKey(color);
+    final oKey = cleanKey(outfit);
+    final eKey = cleanKey(extra);
+
     return SizedBox(
       width: size,
       height: size,
@@ -41,13 +50,14 @@ class PomodoriAvatar extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           PomodoriImage(
-            asset: color == 'classic' ? 'pomodori_happy' : 'pomodori_$color',
+            asset: cKey == 'classic' ? 'pomodori_happy' : 'pomodori_$cKey',
             size: size,
-            body: bodyOf(color),
+            body: bodyOf(cKey),
           ),
-          if (outfit != 'classic')
-            _Accessory(asset: 'outfit_$outfit', kind: outfit),
-          if (extra != 'none') _Accessory(asset: 'extra_$extra', kind: extra),
+          if (oKey != 'classic')
+            _Accessory(asset: 'outfit_$oKey', kind: oKey),
+          if (eKey != 'none')
+            _Accessory(asset: 'extra_$eKey', kind: eKey),
         ],
       ),
     );
