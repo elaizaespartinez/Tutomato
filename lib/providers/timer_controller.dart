@@ -157,14 +157,20 @@ class TimerController extends Notifier<TimerState> {
 
   // ---- Completion ----------------------------------------------------------
 
+  Future<void> _notifyTimerEnded() async {
+    try {
+      await SystemSound.play(SystemSoundType.alert);
+      await HapticFeedback.vibrate();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await HapticFeedback.vibrate();
+    } catch (_) {}
+  }
+
   Future<void> _completeFocus() async {
     _lockIn.stop();
 
-    // Trigger vibration and alert sound when timer completes
-    try {
-      await HapticFeedback.vibrate();
-      await SystemSound.play(SystemSoundType.click);
-    } catch (_) {}
+    // Distinct double vibration pulse and OS alert audio feedback
+    unawaited(_notifyTimerEnded());
 
     final uid = ref.read(currentUidProvider);
     final snapshot = state;
@@ -287,10 +293,7 @@ class TimerController extends Notifier<TimerState> {
       case TimerPhase.focus:
         _completeFocus();
       case TimerPhase.breakTime:
-        try {
-          HapticFeedback.vibrate();
-          SystemSound.play(SystemSoundType.click);
-        } catch (_) {}
+        unawaited(_notifyTimerEnded());
         state = state.copyWith(remaining: Duration.zero);
       default:
         break;
