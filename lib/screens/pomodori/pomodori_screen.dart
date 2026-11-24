@@ -84,12 +84,41 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
     }
   }
 
-  Future<void> _choose(ShopItem item) async {
+  Future<void> _choose(ShopItem item, UserProfile profile) async {
+    final isOwned = profile.owns(item.id);
+    if (!isOwned) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.cream,
+          title: Text('Buy ${item.name}?'),
+          content: Text('Purchase ${item.name} for ${item.cost} Study Points?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'Buy',
+                style: TextStyle(color: AppColors.leaf, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+    }
+
     try {
       await ref.read(actionsProvider).buyAndEquipItem(item.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Equipped ${item.name}!'), backgroundColor: AppColors.leaf),
+          SnackBar(
+            content: Text(isOwned ? 'Equipped ${item.name}!' : 'Bought and equipped ${item.name}!'),
+            backgroundColor: AppColors.leaf,
+          ),
         );
       }
     } on AppException catch (e) {
@@ -195,7 +224,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
     );
   }
 
-  Widget _itemCard(ShopEntry entry) {
+  Widget _itemCard(ShopEntry entry, UserProfile profile) {
     final item = entry.item;
     final equipped = entry.equipped;
     final owned = entry.owned;
@@ -238,7 +267,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
         shape: shape,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => _choose(item),
+          onTap: () => _choose(item, profile),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 14, 8, 12),
             child: Column(
@@ -314,7 +343,7 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
           children: [
             for (var i = 0; i < shopEntries.length; i++) ...[
               if (i > 0) const SizedBox(width: 12),
-              _itemCard(shopEntries[i]),
+              _itemCard(shopEntries[i], profile),
             ],
           ],
         ),

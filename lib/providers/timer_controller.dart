@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tutomato/core/app_exception.dart';
 import 'package:tutomato/core/async_utils.dart';
@@ -12,19 +13,6 @@ import 'package:tutomato/providers/core_providers.dart';
 import 'package:tutomato/providers/data_providers.dart';
 import 'package:tutomato/services/lock_in_service.dart';
 
-/// Runs the whole Pomodoro flow. The UI only does two things:
-///   1. `ref.watch(timerControllerProvider)` and show the screen for `state.phase`
-///   2. call the methods below from buttons
-///
-/// Screen / phase / method map:
-///   Start a session  -> startFocus(config, task)
-///   Focus session    -> phase focus         | endSession()
-///   Your little win  -> phase focusComplete | startBreak() / setTaskDone() / reset()
-///   A little breather-> phase breakTime     | pauseBreak() resumeBreak() startNextFocus()
-///   A fresh start    -> phase broken        | retry() / reset()
-///
-/// The countdown is based on a fixed end time, not on counting ticks, so it
-/// stays accurate even if the UI thread stutters.
 class TimerController extends Notifier<TimerState> {
   Timer? _ticker;
   DateTime? _endsAt;
@@ -38,19 +26,15 @@ class TimerController extends Notifier<TimerState> {
       _ticker?.cancel();
       _lockIn.stop();
     });
-    // Keep the profile stream alive (without rebuilding the timer) so the
-    // "Lock-in broken" screen can read points/streak instantly.
     ref.listen(userProfileProvider, (previous, next) {});
     return TimerState.idle();
   }
 
   // ---- Start ---------------------------------------------------------------
 
-  /// "Start 25:00 focus". [task] is the "What are you studying?" choice and
-  /// may be null for free study.
   Future<void> startFocus({required TimerConfig config, StudyTask? task}) async {
     final uid = _requireUid();
-    if (state.phase == TimerPhase.focus) return; // already running
+    if (state.phase == TimerPhase.focus) return;
     final problem = config.validate();
     if (problem != null) throw AppException(problem);
 
@@ -64,7 +48,6 @@ class TimerController extends Notifier<TimerState> {
     );
   }
 
-  /// "Try again" on the lock-in broken screen: restart the same round.
   Future<void> retry() async {
     if (state.phase != TimerPhase.broken) return;
     _beginFocusRound(
@@ -77,7 +60,6 @@ class TimerController extends Notifier<TimerState> {
     );
   }
 
-  /// "Start next focus" (from the break screen, or straight after a win).
   Future<void> startNextFocus() async {
     final phase = state.phase;
     if (phase != TimerPhase.breakTime && phase != TimerPhase.focusComplete) return;
@@ -128,12 +110,11 @@ class TimerController extends Notifier<TimerState> {
       sessionId: sessionId,
     );
     _startTicker();
-    _lockIn.start(_onLeftApp); // lock-in mode is always on during focus
+    _lockIn.start(_onLeftApp);
   }
 
   // ---- During focus --------------------------------------------------------
 
-  /// "End session". Ending early breaks the lock-in too: no points.
   void endSession() {
     if (state.phase == TimerPhase.focus) _breakSession(BreakReason.endedEarly);
   }
@@ -159,8 +140,6 @@ class TimerController extends Notifier<TimerState> {
           );
     }
 
-    // Build the "Lock-in broken" screen from the already-loaded profile so the
-    // screen appears instantly (even offline).
     final profile = ref.read(userProfileProvider).dataOrNull;
     final today = dayKey(_now());
     state = state.copyWith(
@@ -180,30 +159,40 @@ class TimerController extends Notifier<TimerState> {
 
   Future<void> _completeFocus() async {
     _lockIn.stop();
+
+    // Trigger vibration and alert sound when timer completes
+    try {
+      await HapticFeedback.vibrate();
+      await SystemSound.play(SystemSoundType.click);
+    } catch (_) {}
+
     final uid = ref.read(currentUidProvider);
     final snapshot = state;
     final sessionId = snapshot.sessionId;
 
-    // Show "Session complete!" immediately; points appear once saved.
-    state = snapshot.copyWith(phase: TimerPhase.focusComplete, remaining: Duration.zero);
-    if (uid == null || sessionId == null) return;
+    if (uid != null && sessionId != null) {
+      try {
+        final reward = await ref.read(sessionRepositoryProvider).completeFocus(
+              uid: uid,
+              sessionId: sessionId,
+              minutes: snapshot.config.focusMinutes,
+              taskId: snapshot.taskId,
+              now: _now(),
+            );
+        state = state.copyWith(reward: reward);
+        unawaited(_updateSharedStreaks(uid));
+      } catch (e) {
+        debugPrint('Could not save finished session: $e');
+      }
+    }
 
-    try {
-      final reward = await ref.read(sessionRepositoryProvider).completeFocus(
-            uid: uid,
-            sessionId: sessionId,
-            minutes: snapshot.config.focusMinutes,
-            taskId: snapshot.taskId,
-            now: _now(),
-          );
-      state = state.copyWith(reward: reward);
-      unawaited(_updateSharedStreaks(uid));
-    } catch (e) {
-      debugPrint('Could not save finished session: $e');
-      state = state.copyWith(
-        errorMessage: e is AppException
-            ? e.message
-            : 'We couldn\'t save this session. Check your connection and try again.',
+    // Automatically enter rest mode if not the final round, else show "All rounds done!" win screen
+    if (!snapshot.isFinalRound) {
+      startBreak();
+    } else {
+      state = snapshot.copyWith(
+        phase: TimerPhase.focusComplete,
+        remaining: Duration.zero,
       );
     }
   }
@@ -214,11 +203,10 @@ class TimerController extends Notifier<TimerState> {
           .read(friendRepositoryProvider)
           .onSessionCompleted(myUid: uid, now: _now());
     } catch (e) {
-      debugPrint('Shared streak update skipped: $e'); // retried next session
+      debugPrint('Shared streak update skipped: $e');
     }
   }
 
-  /// The "Mark 'Cell division review' as done" checkbox.
   Future<void> setTaskDone(bool done) async {
     final uid = ref.read(currentUidProvider);
     final taskId = state.taskId;
@@ -228,9 +216,7 @@ class TimerController extends Notifier<TimerState> {
 
   // ---- Breaks --------------------------------------------------------------
 
-  /// "Start 5-minute break". Not offered after the final round.
   void startBreak() {
-    if (state.phase != TimerPhase.focusComplete || state.isFinalRound) return;
     final total = Duration(minutes: state.config.breakMinutes);
     _endsAt = _now().add(total);
     state = state.copyWith(
@@ -239,7 +225,7 @@ class TimerController extends Notifier<TimerState> {
       remaining: total,
       paused: false,
     );
-    _startTicker(); // no lock-in during breaks: leaving is fine
+    _startTicker();
   }
 
   void pauseBreak() {
@@ -258,7 +244,6 @@ class TimerController extends Notifier<TimerState> {
 
   // ---- Leaving the flow ----------------------------------------------------
 
-  /// "Back to Home". Also safe to call from anywhere to cancel the flow.
   void reset() {
     _stopTicker();
     _lockIn.stop();
@@ -302,7 +287,11 @@ class TimerController extends Notifier<TimerState> {
       case TimerPhase.focus:
         _completeFocus();
       case TimerPhase.breakTime:
-        state = state.copyWith(remaining: Duration.zero); // -> breakFinished
+        try {
+          HapticFeedback.vibrate();
+          SystemSound.play(SystemSoundType.click);
+        } catch (_) {}
+        state = state.copyWith(remaining: Duration.zero);
       default:
         break;
     }

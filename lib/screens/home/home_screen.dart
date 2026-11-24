@@ -76,7 +76,7 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: 20),
         Text('Hi, ${profile.displayName}!', style: AppText.h1),
         const SizedBox(height: 4),
-        const Text('Ready to ripen up?', style: AppText.body),
+        Text('Ready to ripen up?', style: AppText.body),
         const SizedBox(height: 20),
         _pointsPill(profile.points),
         const SizedBox(height: 16),
@@ -264,7 +264,7 @@ class HomeScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.star, color: AppColors.tomato),
               const SizedBox(width: 14),
-              const Text('Study Points', style: AppText.title),
+              Text('Study Points', style: AppText.title),
               const Spacer(),
               Text('$points', style: AppText.h2),
               const SizedBox(width: 6),
@@ -291,7 +291,7 @@ class HomeScreen extends ConsumerWidget {
                   style: AppText.h2.copyWith(fontSize: 28, height: 1.15),
                 ),
                 const SizedBox(height: 6),
-                const Text('One session at a time.', style: AppText.body),
+                Text('One session at a time.', style: AppText.body),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () =>
@@ -344,7 +344,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _sectionHeader(BuildContext context) {
     return Row(
       children: [
-        const Text('To Learn', style: AppText.h2),
+        Text('To Learn', style: AppText.h2),
         const Spacer(),
         InkWell(
           onTap: () => Navigator.pushNamed(context, AppRoutes.toLearn),
