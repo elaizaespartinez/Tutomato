@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "446643269981",
+    "project_id": "tutomato",
+    "storage_bucket": "tutomato.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446643269981:android:06105edad60a73535ff8b4",
+        "android_client_info": {
+          "package_name": "com.tutomato.tutomato"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoAxs4y7NpMQbZ3PZynxMQMptEZqsijKU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
