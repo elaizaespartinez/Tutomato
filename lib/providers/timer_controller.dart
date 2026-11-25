@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tutomato/core/app_exception.dart';
 import 'package:tutomato/core/async_utils.dart';
@@ -160,27 +160,24 @@ class TimerController extends Notifier<TimerState> {
 
   Future<void> _notifyTimerEnded() async {
     try {
-      await FlutterRingtonePlayer().play(
-        android: AndroidSounds.notification,
-        ios: IosSounds.glass,
-        looping: false,
-        volume: 1.0,
-        alarm: true,
-      );
+      final player = AudioPlayer();
+      await player.play(AssetSource('sounds/alarm.mp3'));
+    } catch (_) {
+      try {
+        await SystemSound.play(SystemSoundType.alert);
+      } catch (_) {}
+    }
+    try {
       await HapticFeedback.vibrate();
       await Future<void>.delayed(const Duration(milliseconds: 300));
       await HapticFeedback.vibrate();
-    } catch (_) {
-      try {
-        await HapticFeedback.vibrate();
-      } catch (_) {}
-    }
+    } catch (_) {}
   }
 
   Future<void> _completeFocus() async {
     _lockIn.stop();
 
-    // Distinct double vibration pulse and loud ringtone/notification audio feedback
+    // Distinct double vibration pulse and loud alarm audio feedback
     unawaited(_notifyTimerEnded());
 
     final uid = ref.read(currentUidProvider);
