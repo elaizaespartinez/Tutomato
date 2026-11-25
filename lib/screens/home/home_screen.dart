@@ -9,7 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/app_card.dart';
-import '../../core/widgets/pomodori_image.dart';
+import '../../core/widgets/pomodori_avatar.dart';
 import '../../core/widgets/profile_button.dart';
 import '../../models/study_task.dart';
 import '../../models/user_profile.dart';
@@ -80,7 +80,7 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: 20),
         _pointsPill(profile.points),
         const SizedBox(height: 16),
-        _heroCard(context),
+        _heroCard(context, profile),
         const SizedBox(height: 16),
         _statsCard(profile.minutesOn(today), profile.sessionsOn(today), profile.streakOn(today)),
         const SizedBox(height: 24),
@@ -99,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
 
     final overview = Column(
       children: [
-        _desktopHero(context),
+        _desktopHero(context, profile),
         const SizedBox(height: 20),
         Row(
           children: [
@@ -204,7 +204,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _desktopHero(BuildContext context) {
+  Widget _desktopHero(BuildContext context, UserProfile profile) {
     return AppCard(
       color: AppColors.peach,
       padding: const EdgeInsets.all(32),
@@ -245,7 +245,12 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const PomodoriImage(size: 170),
+          PomodoriAvatar(
+            size: 170,
+            color: profile.equipped.color,
+            outfit: profile.equipped.outfit,
+            extra: profile.equipped.extra,
+          ),
         ],
       ),
     );
@@ -276,7 +281,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _heroCard(BuildContext context) {
+  Widget _heroCard(BuildContext context, UserProfile profile) {
     return AppCard(
       color: AppColors.peach,
       padding: const EdgeInsets.all(20),
@@ -314,7 +319,12 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const PomodoriImage(size: 110),
+          PomodoriAvatar(
+            size: 110,
+            color: profile.equipped.color,
+            outfit: profile.equipped.outfit,
+            extra: profile.equipped.extra,
+          ),
         ],
       ),
     );
@@ -582,7 +592,12 @@ class _PipCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              const PomodoriImage(size: 72),
+              PomodoriAvatar(
+                size: 72,
+                color: profile.equipped.color,
+                outfit: profile.equipped.outfit,
+                extra: profile.equipped.extra,
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

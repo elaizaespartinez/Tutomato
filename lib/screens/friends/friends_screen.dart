@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_exception.dart';
 import '../../core/async_utils.dart';
+import '../../core/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_card.dart';
-import '../../core/widgets/pomodori_image.dart';
+import '../../core/widgets/pomodori_avatar.dart';
 import '../../core/widgets/tab_page.dart';
 import '../../models/friends.dart';
 import '../../models/user_profile.dart';
@@ -222,36 +223,59 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: AppCard(
-              child: Row(
+              child: Column(
                 children: [
-                  const PomodoriImage(size: 64),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          card.name,
-                          style: AppText.h2.copyWith(fontSize: 20),
+                  Row(
+                    children: [
+                      PomodoriAvatar(
+                        size: 64,
+                        color: card.equipped.color,
+                        outfit: card.equipped.outfit,
+                        extra: card.equipped.extra,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              card.name,
+                              style: AppText.h2.copyWith(fontSize: 20),
+                            ),
+                            Text(
+                              '${card.sharedStreak}-day shared streak',
+                              style: AppText.body,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              card.statusText,
+                              style: TextStyle(
+                                color: card.status == FriendStatusKind.focusingNow ? AppColors.tomato : AppColors.leaf,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '${card.sharedStreak}-day shared streak',
-                          style: AppText.body,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          card.statusText,
-                          style: TextStyle(
-                            color: card.status == FriendStatusKind.focusingNow ? AppColors.tomato : AppColors.leaf,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  _CheerButton(
-                    cheered: cheeredSet.contains(card.uid),
-                    onTap: () => _cheer(card.uid, card.name),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionButton(
+                          label: 'Study Together',
+                          icon: Icons.play_arrow,
+                          color: AppColors.leaf,
+                          onTap: () => Navigator.pushNamed(context, AppRoutes.sessionSetup),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _CheerButton(
+                        cheered: cheeredSet.contains(card.uid),
+                        onTap: () => _cheer(card.uid, card.name),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -279,15 +303,17 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 20),
+        _howPointsWorkCard(),
       ],
       children: [
         if (hero != null)
-          _sharedStreakCard(hero, profile.displayName),
+          _sharedStreakCard(hero, profile),
       ],
     );
   }
 
-  Widget _sharedStreakCard(FriendsHero hero, String myName) {
+  Widget _sharedStreakCard(FriendsHero hero, UserProfile profile) {
     final friendCard = hero.friend;
     return AppCard(
       color: AppColors.peach,
@@ -313,12 +339,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _Buddy(name: myName),
+              _Buddy(
+                name: profile.displayName,
+                color: profile.equipped.color,
+                outfit: profile.equipped.outfit,
+                extra: profile.equipped.extra,
+              ),
               const SizedBox(width: 20),
               _Buddy(
-                name: friendCard.focusedToday
-                    ? '${friendCard.name} ✓'
-                    : friendCard.name,
+                name: friendCard.focusedToday ? '${friendCard.name} ✓' : friendCard.name,
+                color: friendCard.equipped.color,
+                outfit: friendCard.equipped.outfit,
+                extra: friendCard.equipped.extra,
               ),
             ],
           ),
@@ -340,18 +372,51 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       ),
     );
   }
+
+  Widget _howPointsWorkCard() {
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('How Study Points & Friends Work', style: AppText.h2.copyWith(fontSize: 18)),
+          const SizedBox(height: 8),
+          const Text(
+            '• Earn Points: Complete any focus session on your timer to earn Study Points (+25 pts / 25 min).\n'
+            '• Shared Streak: When both you and your friend complete at least one focus session on the same day, your shared streak grows (+1 day)!\n'
+            '• Customize: Spend your Study Points in Pomodori’s Wardrobe to buy and unlock custom looks.',
+            style: AppText.small,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Buddy extends StatelessWidget {
   final String name;
-  const _Buddy({required this.name});
+  final String color;
+  final String outfit;
+  final String extra;
+
+  const _Buddy({
+    required this.name,
+    this.color = 'classic',
+    this.outfit = 'classic',
+    this.extra = 'none',
+  });
 
   @override
   Widget build(BuildContext context) => Flexible(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const PomodoriImage(size: 120),
+        PomodoriAvatar(
+          size: 120,
+          color: color,
+          outfit: outfit,
+          extra: extra,
+        ),
         const SizedBox(height: 4),
         Text(
           name,
@@ -364,6 +429,48 @@ class _Buddy extends StatelessWidget {
           ),
         ),
       ],
+    ),
+  );
+}
+
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: color,
+    borderRadius: BorderRadius.circular(20),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: Colors.white),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }

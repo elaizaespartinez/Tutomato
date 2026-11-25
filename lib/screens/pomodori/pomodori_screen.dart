@@ -23,7 +23,7 @@ class PomodoriScreen extends ConsumerStatefulWidget {
 }
 
 class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
-  ShopCategory _category = ShopCategory.outfit;
+  int _selectedTab = 0; // 0 Outfits, 1 Colors, 2 Extras, 3 Collection
 
   static final _fallbackProfile = UserProfile(
     uid: '',
@@ -48,38 +48,54 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
   );
 
   static const _tabs = [
-    (ShopCategory.outfit, 'Outfits'),
-    (ShopCategory.color, 'Colors'),
-    (ShopCategory.extra, 'Extras'),
+    'Outfits',
+    'Colors',
+    'Extras',
+    'Collection',
   ];
 
+  ShopCategory get _currentCategory => switch (_selectedTab) {
+        1 => ShopCategory.color,
+        2 => ShopCategory.extra,
+        _ => ShopCategory.outfit,
+      };
+
   String get _heading {
-    switch (_category) {
-      case ShopCategory.outfit:
+    switch (_selectedTab) {
+      case 0:
         return 'Pick a study look';
-      case ShopCategory.color:
+      case 1:
         return 'Pick your Pomodori’s color';
-      case ShopCategory.extra:
+      case 2:
         return 'Add a little extra';
+      case 3:
+      default:
+        return 'Your unlocked collection';
     }
   }
 
   (String, String) get _footer {
-    switch (_category) {
-      case ShopCategory.outfit:
+    switch (_selectedTab) {
+      case 0:
         return (
-        'Your focus funds the fun.',
-        'Finish a session to earn Study Points. Spend them on a new look for your Pomodori.',
+          'Your focus funds the fun.',
+          'Finish a session to earn Study Points. Spend them on a new look for your Pomodori.',
         );
-      case ShopCategory.color:
+      case 1:
         return (
-        'A fresh shade for your study buddy.',
-        'Choose a colorway. Outfits and extras stay the same. Finish focus sessions to earn more Study Points.',
+          'A fresh shade for your study buddy.',
+          'Choose a colorway. Outfits and extras stay the same. Finish focus sessions to earn more Study Points.',
         );
-      case ShopCategory.extra:
+      case 2:
         return (
-        'Little details. Big personality.',
-        'Equip one extra alongside your outfit and color. Complete focus sessions to grow your point balance.',
+          'Little details. Big personality.',
+          'Equip one extra alongside your outfit and color. Complete focus sessions to grow your point balance.',
+        );
+      case 3:
+      default:
+        return (
+          'Change your look anytime.',
+          'All of your unlocked outfits, colors, and accessories are stored here.',
         );
     }
   }
@@ -313,40 +329,66 @@ class _PomodoriScreenState extends ConsumerState<PomodoriScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
-    final shopEntries = ref.watch(shopEntriesProvider(_category));
     final footer = _footer;
+
+    final List<ShopEntry> shopEntries;
+    if (_selectedTab == 3) {
+      // Collection tab: show all owned items
+      shopEntries = ShopCatalog.items
+          .where((i) => profile.owns(i.id))
+          .map((i) => ShopEntry(
+                item: i,
+                owned: true,
+                equipped: profile.equipped.idFor(i.category) == i.id,
+                canAfford: true,
+              ))
+          .toList();
+    } else {
+      shopEntries = ref.watch(shopEntriesProvider(_currentCategory));
+    }
 
     return TabPage(
       title: 'Your Pomodori',
       sideChildren: [
         const SizedBox(height: 20),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            for (var i = 0; i < _tabs.length; i++) ...[
-              if (i > 0) const SizedBox(width: 10),
-              Expanded(
-                child: PillChip(
-                  label: _tabs[i].$2,
-                  selected: _category == _tabs[i].$1,
-                  activeColor: AppColors.tomato,
-                  outlined: true,
-                  onTap: () => setState(() => _category = _tabs[i].$1),
-                ),
+            for (var i = 0; i < _tabs.length; i++)
+              PillChip(
+                label: _tabs[i],
+                selected: _selectedTab == i,
+                activeColor: AppColors.tomato,
+                outlined: true,
+                onTap: () => setState(() => _selectedTab = i),
               ),
-            ],
           ],
         ),
         const SizedBox(height: 24),
         Text(_heading, style: AppText.h2.copyWith(fontSize: 26)),
         const SizedBox(height: 14),
-        Row(
-          children: [
-            for (var i = 0; i < shopEntries.length; i++) ...[
-              if (i > 0) const SizedBox(width: 12),
-              _itemCard(shopEntries[i], profile),
+        if (shopEntries.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Text('No unlocked items in your collection yet.', style: AppText.body),
+          )
+        else
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final entry in shopEntries)
+                SizedBox(
+                  width: 150,
+                  child: Row(
+                    children: [
+                      _itemCard(entry, profile),
+                    ],
+                  ),
+                ),
             ],
-          ],
-        ),
+          ),
         const SizedBox(height: 24),
         Text(footer.$1, style: AppText.h2.copyWith(fontSize: 20)),
         const SizedBox(height: 6),

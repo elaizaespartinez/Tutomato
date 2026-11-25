@@ -12,6 +12,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_page.dart';
+import '../../core/widgets/pomodori_avatar.dart';
 import '../../core/widgets/pomodori_image.dart';
 import '../../logic/timer_state.dart';
 import '../../models/user_profile.dart';
@@ -89,6 +90,7 @@ class SessionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final timerState = ref.watch(timerControllerProvider);
+    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
     final p = timerState.phase;
     final mustConfirm = p == TimerPhase.focus || p == TimerPhase.breakTime;
 
@@ -102,11 +104,11 @@ class SessionScreen extends ConsumerWidget {
         }
       },
       child: switch (p) {
-        TimerPhase.idle => _idle(context),
-        TimerPhase.focus => _focus(context, ref, timerState),
-        TimerPhase.focusComplete => _complete(context, ref, timerState),
+        TimerPhase.idle => _idle(context, profile),
+        TimerPhase.focus => _focus(context, ref, timerState, profile),
+        TimerPhase.focusComplete => _complete(context, ref, timerState, profile),
         TimerPhase.breakTime => _rest(context, ref, timerState),
-        TimerPhase.broken => _lockBroken(context, ref, timerState),
+        TimerPhase.broken => _lockBroken(context, ref, timerState, profile),
       },
     );
   }
@@ -134,7 +136,7 @@ class SessionScreen extends ConsumerWidget {
 
   // ==== 1. Focus view ======================================================
 
-  Widget _ring(TimerState state) {
+  Widget _ring(TimerState state, UserProfile profile) {
     return Center(
       child: LayoutBuilder(
         builder: (context, box) {
@@ -167,7 +169,12 @@ class SessionScreen extends ConsumerWidget {
                 ),
                 Positioned(
                   bottom: size * 0.1,
-                  child: PomodoriImage(size: size * 0.24),
+                  child: PomodoriAvatar(
+                    size: size * 0.24,
+                    color: profile.equipped.color,
+                    outfit: profile.equipped.outfit,
+                    extra: profile.equipped.extra,
+                  ),
                 ),
               ],
             ),
@@ -235,7 +242,7 @@ class SessionScreen extends ConsumerWidget {
     ),
   );
 
-  Widget _focus(BuildContext context, WidgetRef ref, TimerState state) {
+  Widget _focus(BuildContext context, WidgetRef ref, TimerState state, UserProfile profile) {
     final endButton = AppButton(
       'End session',
       kind: AppButtonKind.outlined,
@@ -249,7 +256,7 @@ class SessionScreen extends ConsumerWidget {
         maxWidth: _kWideMaxWidth,
         children: [
           _twoColumns(
-            [const SizedBox(height: 8), _ring(state), const SizedBox(height: 16), _dots(state)],
+            [const SizedBox(height: 8), _ring(state, profile), const SizedBox(height: 16), _dots(state)],
             [
               const SizedBox(height: 8),
               _taskCard(state),
@@ -270,7 +277,7 @@ class SessionScreen extends ConsumerWidget {
       title: 'Focus session',
       children: [
         const SizedBox(height: 8),
-        _ring(state),
+        _ring(state, profile),
         const SizedBox(height: 16),
         _dots(state),
         const SizedBox(height: 24),
@@ -538,13 +545,19 @@ class SessionScreen extends ConsumerWidget {
     );
   }
 
-  Widget _complete(BuildContext context, WidgetRef ref, TimerState state) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
+  Widget _complete(BuildContext context, WidgetRef ref, TimerState state, UserProfile profile) {
     final last = state.isFinalRound;
 
     final hero = <Widget>[
       const SizedBox(height: 8),
-      const Center(child: PomodoriImage(size: 160)),
+      Center(
+        child: PomodoriAvatar(
+          size: 160,
+          color: profile.equipped.color,
+          outfit: profile.equipped.outfit,
+          extra: profile.equipped.extra,
+        ),
+      ),
       const SizedBox(height: 12),
       Text(
         last ? 'All rounds done!' : 'Session complete!',
@@ -614,16 +627,17 @@ class SessionScreen extends ConsumerWidget {
 
   // ==== 2. Lock-in broken ("A fresh start") ================================
 
-  Widget _lockBroken(BuildContext context, WidgetRef ref, TimerState state) {
-    final profile = ref.watch(userProfileProvider).dataOrNull ?? _fallbackProfile;
+  Widget _lockBroken(BuildContext context, WidgetRef ref, TimerState state, UserProfile profile) {
     final broken = state.broken;
 
     final hero = <Widget>[
       const SizedBox(height: 8),
-      const Center(
-        child: PomodoriImage(
+      Center(
+        child: PomodoriAvatar(
           size: 150,
-          mood: PomodoriMood.sad,
+          color: profile.equipped.color,
+          outfit: profile.equipped.outfit,
+          extra: profile.equipped.extra,
         ),
       ),
       const SizedBox(height: 12),
@@ -763,12 +777,19 @@ class SessionScreen extends ConsumerWidget {
     );
   }
 
-  Widget _idle(BuildContext context) {
+  Widget _idle(BuildContext context, UserProfile profile) {
     return AppPage(
       title: 'Session',
       children: [
         const SizedBox(height: 24),
-        const Center(child: PomodoriImage(size: 140)),
+        Center(
+          child: PomodoriAvatar(
+            size: 140,
+            color: profile.equipped.color,
+            outfit: profile.equipped.outfit,
+            extra: profile.equipped.extra,
+          ),
+        ),
         const SizedBox(height: 16),
         Text(
           'No session running',
